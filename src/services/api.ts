@@ -143,5 +143,25 @@ export const api = {
       // Fallback
     }
     return null;
+  },
+
+  async getEvidenceAudit(): Promise<any[]> {
+    try {
+      const res = await fetch('/api/audit');
+      if (res.ok) return await res.json();
+    } catch (e) {
+      console.error('Failed to fetch evidence audit:', e);
+    }
+    return [];
+  },
+
+  async getDataSourcesMarkdown(): Promise<string> {
+    try {
+      const res = await fetch('/api/data-sources-markdown');
+      if (res.ok) return await res.text();
+    } catch (e) {
+      console.error('Failed to fetch data sources markdown:', e);
+    }
+    return '';
   }
 };

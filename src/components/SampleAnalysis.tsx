@@ -47,61 +47,61 @@ export const SampleAnalysis: React.FC<SampleAnalysisProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copiedJson, setCopiedJson] = useState(false);
 
-  // 5 Preset Scenarios for instant demonstration
+  // 5 Preset Scenarios for instant demonstration - Explicitly labeled as Demo Samples
   const presets = [
     {
       id: 'p1',
       label: 'Preset 1: Circadian Locus',
       desc: 'PER2 + Melatonin (Circadian Rhythm Sleep-Wake Disorder)',
-      sampleId: 'SAMPLE001',
+      sampleId: 'DEMO-PER2-01',
       gene: 'PER2',
       biomarker: 'Melatonin',
       geneResult: 'Detected' as const,
-      biomarkerValue: '35',
+      biomarkerValue: 'Detected (Circadian Phase Shift)',
       biomarkerUnit: 'pg/mL'
     },
     {
       id: 'p2',
       label: 'Preset 2: Narcolepsy Autoimmunity',
       desc: 'HLA-DQB1 + Orexin-A (Narcolepsy Type 1)',
-      sampleId: 'SAMPLE002',
+      sampleId: 'DEMO-HLA-02',
       gene: 'HLA-DQB1',
       biomarker: 'Orexin-A (Hypocretin-1)',
       geneResult: 'Variant Identified' as const,
-      biomarkerValue: '45',
+      biomarkerValue: 'Deficient (<= 110)',
       biomarkerUnit: 'pg/mL'
     },
     {
       id: 'p3',
       label: 'Preset 3: Insomnia Hyperarousal',
       desc: 'SLC6A4 + Cortisol (Chronic Insomnia Disorder)',
-      sampleId: 'SAMPLE003',
+      sampleId: 'DEMO-5HTT-03',
       gene: 'SLC6A4',
       biomarker: 'Cortisol',
       geneResult: 'Detected' as const,
-      biomarkerValue: '18.5',
+      biomarkerValue: 'Elevated Evening Nadir',
       biomarkerUnit: 'μg/dL'
     },
     {
       id: 'p4',
       label: 'Preset 4: Sleep Apnea Inflammation',
-      desc: 'TNFRSF1A + IL-6 (Obstructive Sleep Apnea)',
-      sampleId: 'SAMPLE004',
-      gene: 'TNFRSF1A',
+      desc: 'TNF + Interleukin-6 (Obstructive Sleep Apnea)',
+      sampleId: 'DEMO-TNF-04',
+      gene: 'TNF',
       biomarker: 'Interleukin-6 (IL-6)',
       geneResult: 'Detected' as const,
-      biomarkerValue: '12.4',
+      biomarkerValue: 'Elevated Inflammatory Cascade',
       biomarkerUnit: 'pg/mL'
     },
     {
       id: 'p5',
       label: 'Preset 5: Negative Control',
       desc: 'Non-matching novel candidate loci',
-      sampleId: 'SAMPLE005',
+      sampleId: 'DEMO-CTRL-05',
       gene: 'OR4F5',
       biomarker: 'Troponin-T',
       geneResult: 'Not Detected' as const,
-      biomarkerValue: '0.01',
+      biomarkerValue: 'Normal Non-Sleep Control',
       biomarkerUnit: 'ng/mL'
     }
   ];
@@ -126,12 +126,13 @@ export const SampleAnalysis: React.FC<SampleAnalysisProps> = ({
     setLoading(true);
     setErrorMessage(null);
     try {
+      const numVal = parseFloat(biomarkerValue);
       const payload: SampleAnalysisRequest = {
-        sampleId: sampleId.trim() || 'SAMPLE_UNSPECIFIED',
+        sampleId: sampleId.trim() || 'DEMO_SAMPLE',
         gene: gene.trim(),
         biomarker: biomarker.trim(),
         geneResult,
-        biomarkerValue: biomarkerValue ? parseFloat(biomarkerValue) : undefined,
+        biomarkerValue: !isNaN(numVal) ? numVal : undefined,
         biomarkerUnit
       };
 
@@ -177,8 +178,24 @@ export const SampleAnalysis: React.FC<SampleAnalysisProps> = ({
           Sample Result Analysis
         </h1>
         <p className="text-sm text-slate-600 mt-1 max-w-3xl">
-          Enter experimental or educational patient test results. The analysis engine queries relational database entities to correlate genes and biomarkers with documented sleep disorders and primary research citations.
+          Queries curated relational database entities to correlate genes and biomarkers with documented sleep disorders and peer-reviewed citations. <strong>This is a bioinformatics exploration tool, NOT a diagnostic medical system.</strong>
         </p>
+      </div>
+
+      {/* Mandatory Demo Sample Banner (Requirement 11 & 12) */}
+      <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-xl flex items-start gap-3 text-xs text-amber-950 shadow-2xs">
+        <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+        <div className="space-y-1">
+          <div className="flex items-center gap-2 font-bold font-mono text-[11px] text-amber-900 uppercase">
+            <span className="bg-amber-200/80 px-2 py-0.5 rounded border border-amber-300">
+              Demo Sample — Not Clinical Data
+            </span>
+            <span>Academic Demonstration Mode</span>
+          </div>
+          <p className="leading-relaxed text-amber-900">
+            SleepGeneMap does not collect real patient records or fabricate numerical diagnostic measurements. The presets and fields below are simulated test inputs demonstrating how candidate genes and biomarkers map to published biomedical literature in the curated research database.
+          </p>
+        </div>
       </div>
 
       {/* Preset Quick Load Row */}
@@ -186,9 +203,9 @@ export const SampleAnalysis: React.FC<SampleAnalysisProps> = ({
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider font-mono flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-teal-600" />
-            Quick-Load Demonstration Presets
+            Demonstration Presets (Demo Sample — Not Clinical Data)
           </span>
-          <span className="text-[11px] text-slate-500">Click a preset to populate input parameters</span>
+          <span className="text-[11px] text-slate-500 font-mono">Click to test pipeline</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
           {presets.map((p) => (
@@ -197,8 +214,13 @@ export const SampleAnalysis: React.FC<SampleAnalysisProps> = ({
               onClick={() => handleApplyPreset(p)}
               className="text-left p-2.5 bg-white hover:bg-teal-50 border border-slate-200 hover:border-teal-300 rounded-lg transition-all text-xs group"
             >
-              <div className="font-bold text-slate-900 group-hover:text-teal-800 font-mono">
-                {p.sampleId}
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-900 group-hover:text-teal-800 font-mono">
+                  {p.sampleId}
+                </span>
+                <span className="text-[9px] font-mono text-amber-800 bg-amber-50 px-1 rounded">
+                  Demo
+                </span>
               </div>
               <div className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
                 {p.gene} + {p.biomarker}
@@ -588,12 +610,20 @@ export const SampleAnalysis: React.FC<SampleAnalysisProps> = ({
 
           {/* Structured Interpretation Box */}
           <div className="p-4 bg-slate-900 text-white rounded-xl space-y-2">
-            <span className="text-xs font-mono uppercase text-teal-400 tracking-wider font-bold block">
-              Bioinformatics Interpretation
-            </span>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-mono uppercase text-teal-400 tracking-wider font-bold">
+                Bioinformatics Research Association
+              </span>
+              <span className="text-[11px] font-mono text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800">
+                Non-Diagnostic Research Finding
+              </span>
+            </div>
             <p className="text-sm font-medium leading-relaxed text-slate-200">
               {result.interpretation}
             </p>
+            <div className="text-[11px] text-teal-300/90 font-mono pt-1.5 border-t border-slate-800">
+              Notice: The entered gene/biomarker has an association with this sleep disorder in the curated research database. This is not a diagnosis of a patient.
+            </div>
           </div>
 
           {/* Mandatory Medical Safety Disclaimer */}

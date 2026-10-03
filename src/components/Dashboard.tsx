@@ -271,7 +271,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </p>
             </div>
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-              <span className="text-slate-400 font-mono">PMID: 11239163</span>
+              <span className="text-slate-400 font-mono">PMID: 11232563</span>
               <button 
                 onClick={() => {
                   const d = disorders.find(item => item.id === 1);
@@ -299,7 +299,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </p>
             </div>
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-              <span className="text-slate-400 font-mono">PMID: 11245561</span>
+              <span className="text-slate-400 font-mono">PMID: 11179016</span>
               <button 
                 onClick={() => {
                   const d = disorders.find(item => item.id === 2);
@@ -327,7 +327,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </p>
             </div>
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-              <span className="text-slate-400 font-mono">PMID: 19481481</span>
+              <span className="text-slate-400 font-mono">PMID: 20337192</span>
               <button 
                 onClick={() => {
                   const d = disorders.find(item => item.id === 3);
@@ -348,14 +348,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 <span className="text-rose-700 font-semibold">Hypoxic Cytokines</span>
               </div>
               <h3 className="font-bold text-slate-900 mb-1">
-                TNFRSF1A / IL6 ↔ AHI
+                TNF / IL6 ↔ AHI
               </h3>
               <p className="text-xs text-slate-600 mb-3 line-clamp-3">
                 Repetitive pharyngeal obstruction causing nocturnal desaturation cycles, driving systemic secretion of somnogenic cytokines (IL-6, TNF-α) proportional to the Apnea-Hypopnea Index.
               </p>
             </div>
             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-              <span className="text-slate-400 font-mono">PMID: 23541571</span>
+              <span className="text-slate-400 font-mono">PMID: 22176251</span>
               <button 
                 onClick={() => {
                   const d = disorders.find(item => item.id === 4);
@@ -366,6 +366,56 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 Inspect
               </button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Data Curation & Evidence Integrity Section */}
+      <section className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 space-y-4 shadow-2xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-semibold text-teal-800 uppercase tracking-wider font-mono mb-1">
+              <FileCheck2 className="w-4 h-4 text-teal-600" />
+              <span>Academic Scientific Integrity & Verification</span>
+            </div>
+            <h2 className="text-xl font-bold text-slate-900">
+              Data Sources, Methodology & Evidence Audit
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl">
+              Strict bioinformatics curation: zero synthetic associations, verified PubMed PMIDs, official HGNC/NCBI gene loci, and an 8-stage data extraction protocol.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => onNavigate('datasources')}
+              className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold shadow-2xs flex items-center gap-1.5 transition-colors whitespace-nowrap"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>Data Sources & Methodology</span>
+            </button>
+            <a
+              href="/api/audit/csv"
+              download="evidence_audit.csv"
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap"
+            >
+              <span>Download evidence_audit.csv</span>
+            </a>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 text-xs text-slate-600">
+          <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 space-y-1">
+            <span className="font-bold text-slate-900 block">1. Traceable Provenance</span>
+            <p>Every relationship links to an official PubMed PMID, DOI, and evidence classification (GWAS, Functional, Clinical Study).</p>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 space-y-1">
+            <span className="font-bold text-slate-900 block">2. Non-Diagnostic Guardrails</span>
+            <p>Non-diagnostic language: associations reflect curated research, not patient clinical diagnoses.</p>
+          </div>
+          <div className="p-3 bg-slate-50 rounded-lg border border-slate-100 space-y-1">
+            <span className="font-bold text-slate-900 block">3. Audited Production Dataset</span>
+            <p>Seeded directly from <code className="font-mono text-teal-800">/database/data_verified.sql</code> with unverified loci eliminated.</p>
           </div>
         </div>
       </section>

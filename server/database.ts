@@ -31,7 +31,9 @@ class SleepGeneDatabase {
 
     const rootDir = path.resolve(__dirname, '..');
     const schemaPath = path.join(rootDir, 'database', 'schema.sql');
-    const dataPath = path.join(rootDir, 'database', 'data.sql');
+    const verifiedDataPath = path.join(rootDir, 'database', 'data_verified.sql');
+    const defaultDataPath = path.join(rootDir, 'database', 'data.sql');
+    const dataPath = fs.existsSync(verifiedDataPath) ? verifiedDataPath : defaultDataPath;
 
     if (!fs.existsSync(schemaPath) || !fs.existsSync(dataPath)) {
       throw new Error(`Database SQL files missing at ${schemaPath} or ${dataPath}`);
@@ -587,21 +589,21 @@ class SleepGeneDatabase {
   } {
     const db = this.ensureDb();
 
-    const gdStmt = db.prepare('SELECT id, gene_id as geneId, disorder_id as disorderId, evidence, pmid, source FROM gene_disorder');
+    const gdStmt = db.prepare('SELECT id, gene_id as geneId, disorder_id as disorderId, evidence, evidence_type as evidenceType, source_database as sourceDatabase, pmid, doi FROM gene_disorder');
     const geneDisorders: any[] = [];
     while (gdStmt.step()) {
       geneDisorders.push(gdStmt.getAsObject());
     }
     gdStmt.free();
 
-    const gbStmt = db.prepare('SELECT id, gene_id as geneId, biomarker_id as biomarkerId, relationship, evidence, pmid, source FROM gene_biomarker');
+    const gbStmt = db.prepare('SELECT id, gene_id as geneId, biomarker_id as biomarkerId, relationship, evidence, evidence_type as evidenceType, source_database as sourceDatabase, pmid, doi FROM gene_biomarker');
     const geneBiomarkers: any[] = [];
     while (gbStmt.step()) {
       geneBiomarkers.push(gbStmt.getAsObject());
     }
     gbStmt.free();
 
-    const dbStmt = db.prepare('SELECT id, disorder_id as disorderId, biomarker_id as biomarkerId, evidence, pmid, source FROM disorder_biomarker');
+    const dbStmt = db.prepare('SELECT id, disorder_id as disorderId, biomarker_id as biomarkerId, evidence, evidence_type as evidenceType, source_database as sourceDatabase, pmid, doi FROM disorder_biomarker');
     const disorderBiomarkers: any[] = [];
     while (dbStmt.step()) {
       disorderBiomarkers.push(dbStmt.getAsObject());

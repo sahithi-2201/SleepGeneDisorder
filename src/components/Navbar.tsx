@@ -17,6 +17,7 @@ export type NavTab =
   | 'biomarkers' 
   | 'analysis' 
   | 'network' 
+  | 'datasources'
   | 'academic';
 
 interface NavbarProps {
@@ -123,6 +124,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             <button
+              onClick={() => onSelectTab('datasources')}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
+                activeTab === 'datasources'
+                  ? 'text-teal-700 bg-teal-50/80 font-semibold'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
+              }`}
+            >
+              Data Sources & Evidence
+            </button>
+
+            <button
               onClick={() => onSelectTab('academic')}
               className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
                 activeTab === 'academic'
@@ -189,6 +201,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           className={`px-2 py-1 rounded ${activeTab === 'analysis' ? 'text-teal-700 font-semibold' : 'text-slate-600'}`}
         >
           Analysis
+        </button>
+        <button
+          onClick={() => onSelectTab('datasources')}
+          className={`px-2 py-1 rounded ${activeTab === 'datasources' ? 'text-teal-700 font-semibold' : 'text-slate-600'}`}
+        >
+          Evidence
         </button>
         <button
           onClick={() => onSelectTab('academic')}

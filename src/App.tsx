@@ -12,6 +12,7 @@ import { BiomarkerExplorer } from './components/BiomarkerExplorer';
 import { SampleAnalysis } from './components/SampleAnalysis';
 import { NetworkVisualization } from './components/NetworkVisualization';
 import { AcademicProjectViewer } from './components/AcademicProjectViewer';
+import { DataSourcesAndEvidence } from './components/DataSourcesAndEvidence';
 import { DisorderDetailModal } from './components/DisorderDetailModal';
 import { GeneDetailModal } from './components/GeneDetailModal';
 import { BiomarkerDetailModal } from './components/BiomarkerDetailModal';
@@ -217,6 +218,10 @@ export default function App() {
         {activeTab === 'academic' && (
           <AcademicProjectViewer />
         )}
+
+        {activeTab === 'datasources' && (
+          <DataSourcesAndEvidence statistics={statistics} />
+        )}
       </main>
 
       {/* Modals for Deep Inspection */}
@@ -304,6 +309,12 @@ export default function App() {
             </div>
 
             <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+              <button 
+                onClick={() => setActiveTab('datasources')} 
+                className="hover:text-teal-700 font-semibold text-teal-800 transition-colors"
+              >
+                Data Sources & Evidence
+              </button>
               <button 
                 onClick={() => setActiveTab('academic')} 
                 className="hover:text-teal-700 transition-colors"

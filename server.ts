@@ -107,6 +107,86 @@ async function startServer() {
     res.json(database.getRelations());
   });
 
+  // Evidence Audit CSV endpoints
+  app.get('/api/audit', (_req, res) => {
+    try {
+      const csvPath = path.resolve(__dirname, 'evidence_audit.csv');
+      if (!fs.existsSync(csvPath)) {
+        return res.json([]);
+      }
+      const raw = fs.readFileSync(csvPath, 'utf-8');
+      const lines = raw.split(/\r?\n/).filter(l => l.trim().length > 0);
+      if (lines.length < 2) return res.json([]);
+
+      // Simple robust CSV row parser respecting quoted fields
+      const parseLine = (line: string): string[] => {
+        const result: string[] = [];
+        let cur = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+          if (char === '"' || char === "'") {
+            inQuotes = !inQuotes;
+          } else if (char === ',' && !inQuotes) {
+            result.push(cur.trim());
+            cur = '';
+          } else {
+            cur += char;
+          }
+        }
+        result.push(cur.trim());
+        return result;
+      };
+
+      const headers = parseLine(lines[0]);
+      const records = lines.slice(1).map(line => {
+        const vals = parseLine(line);
+        const record: Record<string, string> = {};
+        headers.forEach((h, idx) => {
+          record[h] = vals[idx] !== undefined ? vals[idx] : '';
+        });
+        return {
+          relationshipType: record['relationship_type'] || '',
+          gene: record['gene'] || '',
+          disorder: record['disorder'] || '',
+          biomarker: record['biomarker'] || '',
+          pmid: record['pmid'] || '',
+          paperTitle: record['paper_title'] || '',
+          source: record['source'] || '',
+          evidenceStatus: record['evidence_status'] || 'UNVERIFIED',
+          verificationNotes: record['verification_notes'] || ''
+        };
+      });
+
+      res.json(records);
+    } catch (err: any) {
+      res.status(500).json({ error: 'Failed to read evidence audit', message: err.message });
+    }
+  });
+
+  app.get('/api/audit/csv', (_req, res) => {
+    const csvPath = path.resolve(__dirname, 'evidence_audit.csv');
+    if (!fs.existsSync(csvPath)) {
+      return res.status(404).send('evidence_audit.csv not found');
+    }
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="evidence_audit.csv"');
+    res.sendFile(csvPath);
+  });
+
+  app.get('/api/data-sources-markdown', (_req, res) => {
+    try {
+      const mdPath = path.resolve(__dirname, 'database', 'DATA_SOURCES.md');
+      if (!fs.existsSync(mdPath)) {
+        return res.status(404).send('DATA_SOURCES.md not found');
+      }
+      res.setHeader('Content-Type', 'text/markdown');
+      res.send(fs.readFileSync(mdPath, 'utf-8'));
+    } catch (err: any) {
+      res.status(500).send(err.message);
+    }
+  });
+
   // Dynamic file loader endpoint for inspecting the real physical backend and database folders
   app.get('/api/project-files', (_req, res) => {
     try {

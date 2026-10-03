@@ -140,14 +140,43 @@ export const GeneDetailModal: React.FC<GeneDetailModalProps> = ({
                       </span>
                     </div>
                     {relation && (
-                      <p className="text-xs text-slate-600 italic bg-slate-50 p-2 rounded border border-slate-100 mt-1.5">
-                        {relation.evidence}
-                        {relation.pmid && (
-                          <span className="block mt-1 font-mono text-[11px] text-teal-700 not-italic">
-                            Evidence PMID: {relation.pmid}
+                      <div className="mt-2 text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-200/80 space-y-1.5" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
+                          <span className="font-semibold text-slate-700">
+                            Evidence: <span className="font-normal text-indigo-800 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-200">{relation.evidenceType || 'Literature association'}</span>
                           </span>
-                        )}
-                      </p>
+                          <span className="text-slate-500 font-medium">
+                            Source: <span className="text-slate-700">{relation.sourceDatabase || 'PubMed'}</span>
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 italic">
+                          {relation.evidence}
+                        </p>
+                        <div className="flex items-center gap-3 pt-1 border-t border-slate-200/60 font-mono text-[11px]">
+                          {relation.pmid && (
+                            <a
+                              href={`https://pubmed.ncbi.nlm.nih.gov/${relation.pmid}/`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-indigo-700 hover:text-indigo-900 inline-flex items-center gap-1 hover:underline"
+                            >
+                              <span>PMID: {relation.pmid}</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          )}
+                          {relation.doi && (
+                            <a
+                              href={`https://doi.org/${relation.doi}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-slate-500 hover:text-slate-800 inline-flex items-center gap-1 hover:underline truncate max-w-[150px]"
+                            >
+                              <span>DOI: {relation.doi}</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
                 );
@@ -181,18 +210,45 @@ export const GeneDetailModal: React.FC<GeneDetailModalProps> = ({
                       </span>
                     </div>
                     {relation && (
-                      <div className="text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 mt-1.5 space-y-1">
-                        <div>
-                          <strong className="text-slate-800">Relationship:</strong> {relation.relationship}
-                        </div>
-                        <div className="italic text-slate-500">
-                          {relation.evidence}
-                        </div>
-                        {relation.pmid && (
-                          <span className="inline-block font-mono text-[11px] text-teal-700 not-italic">
-                            PMID: {relation.pmid}
+                      <div className="mt-2 text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-200/80 space-y-1.5" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex flex-wrap items-center justify-between gap-1 text-[11px]">
+                          <span className="font-semibold text-slate-700">
+                            Evidence: <span className="font-normal text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">{relation.evidenceType || 'Functional Study'}</span>
                           </span>
-                        )}
+                          <span className="text-slate-500 font-medium">
+                            Source: <span className="text-slate-700">{relation.sourceDatabase || 'PubMed'}</span>
+                          </span>
+                        </div>
+                        <div className="text-[11px] text-slate-700">
+                          <span className="font-medium text-slate-900">Signaling Axis:</span> {relation.relationship}
+                        </div>
+                        <p className="text-[11px] text-slate-600 italic">
+                          {relation.evidence}
+                        </p>
+                        <div className="flex items-center gap-3 pt-1 border-t border-slate-200/60 font-mono text-[11px]">
+                          {relation.pmid && (
+                            <a
+                              href={`https://pubmed.ncbi.nlm.nih.gov/${relation.pmid}/`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-amber-800 hover:text-amber-950 inline-flex items-center gap-1 hover:underline"
+                            >
+                              <span>PMID: {relation.pmid}</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          )}
+                          {relation.doi && (
+                            <a
+                              href={`https://doi.org/${relation.doi}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-slate-500 hover:text-slate-800 inline-flex items-center gap-1 hover:underline truncate max-w-[150px]"
+                            >
+                              <span>DOI: {relation.doi}</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

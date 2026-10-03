@@ -68,7 +68,10 @@ export interface GeneDisorderRelation {
   geneId: number;
   disorderId: number;
   evidence: string;
+  evidenceType?: string;
+  sourceDatabase?: string;
   pmid: string;
+  doi?: string;
 }
 
 export interface GeneBiomarkerRelation {
@@ -77,7 +80,10 @@ export interface GeneBiomarkerRelation {
   biomarkerId: number;
   relationship: string;
   evidence: string;
+  evidenceType?: string;
+  sourceDatabase?: string;
   pmid: string;
+  doi?: string;
 }
 
 export interface DisorderBiomarkerRelation {
@@ -85,7 +91,10 @@ export interface DisorderBiomarkerRelation {
   disorderId: number;
   biomarkerId: number;
   evidence: string;
+  evidenceType?: string;
+  sourceDatabase?: string;
   pmid: string;
+  doi?: string;
 }
 
 export interface DatabaseStatistics {
@@ -165,6 +174,18 @@ export interface ProjectFile {
   language: string;
   content: string;
   explanation: string;
+}
+
+export interface EvidenceAuditRecord {
+  relationshipType: string;
+  gene: string;
+  disorder: string;
+  biomarker: string;
+  pmid: string;
+  paperTitle: string;
+  source: string;
+  evidenceStatus: 'VERIFIED' | 'PARTIALLY_SUPPORTED' | 'UNVERIFIED' | 'INCORRECT' | 'REMOVED';
+  verificationNotes: string;
 }
 
 export const MEDICAL_DISCLAIMER_TEXT = 
