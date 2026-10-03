@@ -12,8 +12,7 @@ import {
   BookOpen, 
   FileCheck2 
 } from 'lucide-react';
-import { DatabaseStatistics, Disorder, Gene, Biomarker } from '../types/bioinformatics';
-import { MEDICAL_DISCLAIMER_TEXT } from '../data/bioData';
+import { DatabaseStatistics, Disorder, Gene, Biomarker, MEDICAL_DISCLAIMER_TEXT } from '../types/bioinformatics';
 import { NavTab } from './Navbar';
 
 interface DashboardProps {

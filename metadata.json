@@ -2,5 +2,7 @@
   "name": "SleepGeneMap – Sleep Disorder Gene & Biomarker Explorer",
   "description": "Bioinformatics exploration tool mapping relationships between sleep disorders, genes, and biomarkers with scientific evidence.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

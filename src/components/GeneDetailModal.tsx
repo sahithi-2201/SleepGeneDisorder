@@ -1,25 +1,36 @@
 import React from 'react';
 import { X, Dna, Brain, Activity, ExternalLink, ShieldAlert, Link as LinkIcon } from 'lucide-react';
 import { Gene, Disorder, Biomarker } from '../types/bioinformatics';
-import { DISORDERS, BIOMARKERS, GENE_DISORDER_RELATIONS, GENE_BIOMARKER_RELATIONS } from '../data/bioData';
 
 interface GeneDetailModalProps {
   gene: Gene | null;
   onClose: () => void;
   onSelectDisorder: (disorder: Disorder) => void;
   onSelectBiomarker: (biomarker: Biomarker) => void;
+  disorders?: Disorder[];
+  biomarkers?: Biomarker[];
+  relations?: {
+    geneDisorders?: any[];
+    geneBiomarkers?: any[];
+    disorderBiomarkers?: any[];
+  };
 }
 
 export const GeneDetailModal: React.FC<GeneDetailModalProps> = ({
   gene,
   onClose,
   onSelectDisorder,
-  onSelectBiomarker
+  onSelectBiomarker,
+  disorders = [],
+  biomarkers = [],
+  relations
 }) => {
   if (!gene) return null;
 
-  const associatedDisorders = DISORDERS.filter(d => gene.associatedDisorderIds.includes(d.id));
-  const associatedBiomarkers = BIOMARKERS.filter(b => gene.associatedBiomarkerIds.includes(b.id));
+  const associatedDisorders = disorders.filter(d => gene.associatedDisorderIds.includes(d.id));
+  const associatedBiomarkers = biomarkers.filter(b => gene.associatedBiomarkerIds.includes(b.id));
+  const geneDisorders = relations?.geneDisorders || [];
+  const geneBiomarkers = relations?.geneBiomarkers || [];
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
@@ -111,8 +122,8 @@ export const GeneDetailModal: React.FC<GeneDetailModalProps> = ({
             </h3>
             <div className="space-y-2">
               {associatedDisorders.map(disorder => {
-                const relation = GENE_DISORDER_RELATIONS.find(
-                  r => r.geneId === gene.id && r.disorderId === disorder.id
+                const relation = geneDisorders.find(
+                  r => (r.geneId || r.gene_id) === gene.id && (r.disorderId || r.disorder_id) === disorder.id
                 );
                 return (
                   <div
@@ -152,8 +163,8 @@ export const GeneDetailModal: React.FC<GeneDetailModalProps> = ({
             </h3>
             <div className="space-y-2">
               {associatedBiomarkers.map(biomarker => {
-                const relation = GENE_BIOMARKER_RELATIONS.find(
-                  r => r.geneId === gene.id && r.biomarkerId === biomarker.id
+                const relation = geneBiomarkers.find(
+                  r => (r.geneId || r.gene_id) === gene.id && (r.biomarkerId || r.biomarker_id) === biomarker.id
                 );
                 return (
                   <div

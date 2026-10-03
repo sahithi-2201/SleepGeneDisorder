@@ -20,24 +20,36 @@ import {
   Disorder, 
   Gene, 
   Biomarker, 
-  DatabaseStatistics 
+  DatabaseStatistics,
+  ScientificReference,
+  MEDICAL_DISCLAIMER_TEXT 
 } from './types/bioinformatics';
 import { api } from './services/api';
-import { 
-  DISORDERS, 
-  GENES, 
-  BIOMARKERS, 
-  DATABASE_STATISTICS, 
-  MEDICAL_DISCLAIMER_TEXT 
-} from './data/bioData';
-import { ShieldAlert, Dna, BookOpen, Heart } from 'lucide-react';
+import { Dna, RefreshCw } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
-  const [statistics, setStatistics] = useState<DatabaseStatistics>(DATABASE_STATISTICS);
-  const [disorders, setDisorders] = useState<Disorder[]>(DISORDERS);
-  const [genes, setGenes] = useState<Gene[]>(GENES);
-  const [biomarkers, setBiomarkers] = useState<Biomarker[]>(BIOMARKERS);
+  
+  // Database-driven state fetched dynamically via REST APIs
+  const [statistics, setStatistics] = useState<DatabaseStatistics>({
+    totalDisorders: 0,
+    totalGenes: 0,
+    totalBiomarkers: 0,
+    geneDisorderAssociations: 0,
+    geneBiomarkerAssociations: 0,
+    disorderBiomarkerAssociations: 0,
+    totalReferences: 0
+  });
+  const [disorders, setDisorders] = useState<Disorder[]>([]);
+  const [genes, setGenes] = useState<Gene[]>([]);
+  const [biomarkers, setBiomarkers] = useState<Biomarker[]>([]);
+  const [references, setReferences] = useState<ScientificReference[]>([]);
+  const [relations, setRelations] = useState<{
+    geneDisorders: any[];
+    geneBiomarkers: any[];
+    disorderBiomarkers: any[];
+  }>({ geneDisorders: [], geneBiomarkers: [], disorderBiomarkers: [] });
+  const [isLoading, setIsLoading] = useState(true);
 
   // Modals
   const [selectedDisorder, setSelectedDisorder] = useState<Disorder | null>(null);
@@ -46,12 +58,34 @@ export default function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchInitialQuery, setSearchInitialQuery] = useState('');
 
-  // Fetch from API on mount
+  // Fetch all dataset tables dynamically from the relational SQL database
+  const loadDatabaseData = async () => {
+    setIsLoading(true);
+    try {
+      const [statsData, disordersData, genesData, biomarkersData, refsData, relationsData] = await Promise.all([
+        api.getStatistics().catch(() => null),
+        api.getDisorders().catch(() => []),
+        api.getGenes().catch(() => []),
+        api.getBiomarkers().catch(() => []),
+        api.getReferences().catch(() => []),
+        api.getRelations().catch(() => ({ geneDisorders: [], geneBiomarkers: [], disorderBiomarkers: [] }))
+      ]);
+
+      if (statsData) setStatistics(statsData);
+      setDisorders(disordersData || []);
+      setGenes(genesData || []);
+      setBiomarkers(biomarkersData || []);
+      setReferences(refsData || []);
+      setRelations(relationsData);
+    } catch (err) {
+      console.error('Failed to load database records:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    api.getStatistics().then(setStatistics);
-    api.getDisorders().then(setDisorders);
-    api.getGenes().then(setGenes);
-    api.getBiomarkers().then(setBiomarkers);
+    loadDatabaseData();
   }, []);
 
   // Global hotkey: '/' to open search
@@ -84,6 +118,32 @@ export default function App() {
         }}
       />
 
+      {/* Database Connection Status Bar */}
+      <div className="bg-slate-900 text-slate-300 text-xs px-4 py-1.5 border-b border-slate-800">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span className="font-mono text-[11px] text-slate-300">
+              Database: <strong className="text-white">Relational SQL Engine</strong> (/database/schema.sql & /database/data.sql)
+            </span>
+            <span className="hidden sm:inline text-slate-600">·</span>
+            <span className="hidden sm:inline font-mono text-[11px] text-slate-400">
+              Live Tables: {disorders.length} disorders, {genes.length} genes, {biomarkers.length} biomarkers
+            </span>
+          </div>
+
+          <button
+            onClick={loadDatabaseData}
+            disabled={isLoading}
+            className="flex items-center gap-1 text-[11px] text-teal-400 hover:text-teal-300 transition-colors disabled:opacity-50"
+            title="Refresh database records"
+          >
+            <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="hidden sm:inline">Refresh from DB</span>
+          </button>
+        </div>
+      </div>
+
       {/* Main Viewport Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
         {activeTab === 'dashboard' && (
@@ -103,6 +163,8 @@ export default function App() {
         {activeTab === 'disorders' && (
           <DisorderExplorer
             disorders={disorders}
+            genes={genes}
+            biomarkers={biomarkers}
             onSelectDisorder={setSelectedDisorder}
             onSelectGene={setSelectedGene}
             onSelectBiomarker={setSelectedBiomarker}
@@ -112,6 +174,8 @@ export default function App() {
         {activeTab === 'genes' && (
           <GeneExplorer
             genes={genes}
+            disorders={disorders}
+            biomarkers={biomarkers}
             onSelectGene={setSelectedGene}
             onSelectDisorder={setSelectedDisorder}
             onSelectBiomarker={setSelectedBiomarker}
@@ -121,6 +185,8 @@ export default function App() {
         {activeTab === 'biomarkers' && (
           <BiomarkerExplorer
             biomarkers={biomarkers}
+            disorders={disorders}
+            genes={genes}
             onSelectBiomarker={setSelectedBiomarker}
             onSelectDisorder={setSelectedDisorder}
             onSelectGene={setSelectedGene}
@@ -132,6 +198,8 @@ export default function App() {
             onSelectDisorder={setSelectedDisorder}
             onSelectGene={setSelectedGene}
             onSelectBiomarker={setSelectedBiomarker}
+            genes={genes}
+            biomarkers={biomarkers}
           />
         )}
 
@@ -163,6 +231,10 @@ export default function App() {
           setSelectedDisorder(null);
           setSelectedBiomarker(biomarker);
         }}
+        genes={genes}
+        biomarkers={biomarkers}
+        references={references}
+        relations={relations}
       />
 
       <GeneDetailModal
@@ -176,6 +248,9 @@ export default function App() {
           setSelectedGene(null);
           setSelectedBiomarker(biomarker);
         }}
+        disorders={disorders}
+        biomarkers={biomarkers}
+        relations={relations}
       />
 
       <BiomarkerDetailModal
@@ -189,12 +264,17 @@ export default function App() {
           setSelectedBiomarker(null);
           setSelectedGene(gene);
         }}
+        disorders={disorders}
+        genes={genes}
+        references={references}
+        relations={relations}
       />
 
       <GlobalSearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         initialQuery={searchInitialQuery}
+        references={references}
         onSelectDisorder={(disorder) => {
           setIsSearchOpen(false);
           setSelectedDisorder(disorder);

@@ -11,10 +11,11 @@ import {
   Sparkles
 } from 'lucide-react';
 import { Disorder, DisorderCategory, Gene, Biomarker } from '../types/bioinformatics';
-import { GENES, BIOMARKERS } from '../data/bioData';
 
 interface DisorderExplorerProps {
   disorders: Disorder[];
+  genes?: Gene[];
+  biomarkers?: Biomarker[];
   onSelectDisorder: (disorder: Disorder) => void;
   onSelectGene: (gene: Gene) => void;
   onSelectBiomarker: (biomarker: Biomarker) => void;
@@ -22,6 +23,8 @@ interface DisorderExplorerProps {
 
 export const DisorderExplorer: React.FC<DisorderExplorerProps> = ({
   disorders,
+  genes = [],
+  biomarkers = [],
   onSelectDisorder,
   onSelectGene,
   onSelectBiomarker
@@ -170,8 +173,8 @@ export const DisorderExplorer: React.FC<DisorderExplorerProps> = ({
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredDisorders.map((disorder) => {
-                  const geneSymbols = GENES.filter(g => disorder.associatedGeneIds.includes(g.id));
-                  const biomarkerItems = BIOMARKERS.filter(b => disorder.associatedBiomarkerIds.includes(b.id));
+                  const geneSymbols = genes.filter(g => disorder.associatedGeneIds.includes(g.id));
+                  const biomarkerItems = biomarkers.filter(b => disorder.associatedBiomarkerIds.includes(b.id));
 
                   return (
                     <tr 
@@ -271,8 +274,8 @@ export const DisorderExplorer: React.FC<DisorderExplorerProps> = ({
         /* CARD GRID VIEW */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredDisorders.map((disorder) => {
-            const geneSymbols = GENES.filter(g => disorder.associatedGeneIds.includes(g.id));
-            const biomarkerItems = BIOMARKERS.filter(b => disorder.associatedBiomarkerIds.includes(b.id));
+            const geneSymbols = genes.filter(g => disorder.associatedGeneIds.includes(g.id));
+            const biomarkerItems = biomarkers.filter(b => disorder.associatedBiomarkerIds.includes(b.id));
 
             return (
               <div

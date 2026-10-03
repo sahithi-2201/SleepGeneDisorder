@@ -157,3 +157,15 @@ export interface NetworkData {
   nodes: NetworkNode[];
   links: NetworkLink[];
 }
+
+export interface ProjectFile {
+  path: string;
+  name: string;
+  category: string;
+  language: string;
+  content: string;
+  explanation: string;
+}
+
+export const MEDICAL_DISCLAIMER_TEXT = 
+  "SleepGeneMap is an educational bioinformatics exploration tool. The results are based on relationships stored in the application's research database and should not be used to diagnose, treat, or rule out a medical condition. Consult a qualified healthcare professional for medical interpretation.";

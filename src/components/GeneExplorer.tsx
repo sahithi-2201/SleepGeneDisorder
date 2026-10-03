@@ -10,10 +10,11 @@ import {
   Layers 
 } from 'lucide-react';
 import { Gene, Disorder, Biomarker } from '../types/bioinformatics';
-import { DISORDERS, BIOMARKERS } from '../data/bioData';
 
 interface GeneExplorerProps {
   genes: Gene[];
+  disorders?: Disorder[];
+  biomarkers?: Biomarker[];
   onSelectGene: (gene: Gene) => void;
   onSelectDisorder: (disorder: Disorder) => void;
   onSelectBiomarker: (biomarker: Biomarker) => void;
@@ -21,6 +22,8 @@ interface GeneExplorerProps {
 
 export const GeneExplorer: React.FC<GeneExplorerProps> = ({
   genes,
+  disorders = [],
+  biomarkers = [],
   onSelectGene,
   onSelectDisorder,
   onSelectBiomarker
@@ -137,8 +140,8 @@ export const GeneExplorer: React.FC<GeneExplorerProps> = ({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredGenes.map((gene) => {
-            const associatedDisorders = DISORDERS.filter(d => gene.associatedDisorderIds.includes(d.id));
-            const associatedBiomarkers = BIOMARKERS.filter(b => gene.associatedBiomarkerIds.includes(b.id));
+            const associatedDisorders = disorders.filter(d => gene.associatedDisorderIds.includes(d.id));
+            const associatedBiomarkers = biomarkers.filter(b => gene.associatedBiomarkerIds.includes(b.id));
 
             return (
               <div

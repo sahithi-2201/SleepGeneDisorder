@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, 
   Code, 
@@ -10,21 +10,50 @@ import {
   ExternalLink, 
   ChevronRight,
   Sparkles,
-  Info
+  Info,
+  Folder,
+  FolderOpen,
+  FolderTree,
+  Terminal,
+  Server
 } from 'lucide-react';
 import { ACADEMIC_DOCUMENTATION_CHAPTERS, DocumentationChapter } from '../data/academicDocumentation';
-import { SPRING_BOOT_CODE_FILES, CodeFile } from '../data/springBootCode';
+import { ProjectFile } from '../types/bioinformatics';
+import { api } from '../services/api';
 
 export const AcademicProjectViewer: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'docs' | 'code' | 'architecture'>('docs');
+  const [activeTab, setActiveTab] = useState<'folders' | 'code' | 'docs' | 'architecture'>('folders');
   const [selectedChapterNumber, setSelectedChapterNumber] = useState<number>(1);
-  const [selectedFilePath, setSelectedFilePath] = useState<string>('pom.xml');
+  const [selectedFilePath, setSelectedFilePath] = useState<string>('backend/pom.xml');
+  const [codeFiles, setCodeFiles] = useState<ProjectFile[]>([]);
+  const [loadingFiles, setLoadingFiles] = useState<boolean>(true);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [folderFilter, setFolderFilter] = useState<'All' | 'backend' | 'database'>('All');
+
+  // Load live files directly from disk via /api/project-files
+  useEffect(() => {
+    setLoadingFiles(true);
+    api.getProjectFiles().then((liveFiles) => {
+      if (liveFiles && liveFiles.length > 0) {
+        setCodeFiles(liveFiles);
+      }
+      setLoadingFiles(false);
+    }).catch(() => {
+      setLoadingFiles(false);
+    });
+  }, []);
 
   const currentChapter = ACADEMIC_DOCUMENTATION_CHAPTERS.find(c => c.number === selectedChapterNumber) || ACADEMIC_DOCUMENTATION_CHAPTERS[0];
-  const currentFile = SPRING_BOOT_CODE_FILES.find(f => f.path === selectedFilePath) || SPRING_BOOT_CODE_FILES[0];
+  const currentFile = codeFiles.find(f => f.path === selectedFilePath || f.path.endsWith(selectedFilePath)) || codeFiles[0];
+
+  const filteredCodeFiles = codeFiles.filter(f => {
+    if (folderFilter === 'backend') return f.path.startsWith('backend');
+    if (folderFilter === 'database') return f.path.startsWith('database');
+    return true;
+  });
 
   const handleCopyFile = () => {
+    if (!currentFile) return;
     navigator.clipboard.writeText(currentFile.content);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
@@ -33,17 +62,17 @@ export const AcademicProjectViewer: React.FC = () => {
   const handleDownloadAll = () => {
     const textBlob = new Blob(
       [
-        `# SleepGeneMap - Academic Project Archive\n\n` +
+        `# SleepGeneMap - Full Multi-Tier Project Source Files\n\n` +
         `Generated for 3rd-Year Bioinformatics Mini Project: Web Technologies for Bioinformatics.\n\n` +
         `=======================================================\n\n` +
-        SPRING_BOOT_CODE_FILES.map(f => `--- FILE: ${f.path} ---\n\n${f.content}\n\n`).join('\n')
+        codeFiles.map(f => `--- FILE: ${f.path} ---\n\n${f.content}\n\n`).join('\n')
       ], 
       { type: 'text/plain' }
     );
     const url = URL.createObjectURL(textBlob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'SleepGeneMap_SpringBoot_Project_Files.txt';
+    a.download = 'SleepGeneMap_Project_Files.txt';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -59,10 +88,10 @@ export const AcademicProjectViewer: React.FC = () => {
             <span>Subject: Web Technologies for Bioinformatics</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">
-            Project Documentation & Backend Code Explorer
+            Project Architecture & Source Code
           </h1>
           <p className="text-sm text-slate-600 mt-1 max-w-3xl">
-            Complete academic project documentation across 14 chapters, system architecture ER diagrams, and full production-ready Java Spring Boot & MySQL source code files.
+            Clean architectural separation between the <strong>Frontend UI</strong> (<code className="font-mono text-xs bg-slate-100 px-1 py-0.5 rounded">src/</code>), <strong>Spring Boot Backend</strong> (<code className="font-mono text-xs bg-slate-100 px-1 py-0.5 rounded">backend/</code>), and <strong>Relational Database</strong> (<code className="font-mono text-xs bg-slate-100 px-1 py-0.5 rounded">database/</code>).
           </p>
         </div>
 
@@ -77,10 +106,34 @@ export const AcademicProjectViewer: React.FC = () => {
       </div>
 
       {/* Main Tab Switcher */}
-      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs sm:text-sm">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-2 text-xs sm:text-sm overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('folders')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+            activeTab === 'folders'
+              ? 'bg-teal-700 text-white font-semibold'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          }`}
+        >
+          <FolderTree className="w-4 h-4" />
+          <span>Folder Structure & Separation</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('code')}
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
+            activeTab === 'code'
+              ? 'bg-teal-700 text-white font-semibold'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          }`}
+        >
+          <Code className="w-4 h-4" />
+          <span>Backend Files ({codeFiles.length} on disk)</span>
+        </button>
+
         <button
           onClick={() => setActiveTab('docs')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
             activeTab === 'docs'
               ? 'bg-teal-700 text-white font-semibold'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -91,20 +144,8 @@ export const AcademicProjectViewer: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('code')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-            activeTab === 'code'
-              ? 'bg-teal-700 text-white font-semibold'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
-        >
-          <Code className="w-4 h-4" />
-          <span>Spring Boot Source Files ({SPRING_BOOT_CODE_FILES.length})</span>
-        </button>
-
-        <button
           onClick={() => setActiveTab('architecture')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+          className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${
             activeTab === 'architecture'
               ? 'bg-teal-700 text-white font-semibold'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -115,7 +156,268 @@ export const AcademicProjectViewer: React.FC = () => {
         </button>
       </div>
 
-      {/* TAB 1: 14-CHAPTER DOCUMENTATION VIEWER */}
+      {/* TAB: FOLDER STRUCTURE & DECOUPLING */}
+      {activeTab === 'folders' && (
+        <div className="space-y-6">
+          {/* Separation Highlights */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Folder 1: Backend */}
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-3">
+              <div className="flex items-center gap-2 text-teal-700">
+                <Server className="w-5 h-5 text-teal-600" />
+                <h3 className="font-bold text-slate-900 font-mono text-sm">backend/</h3>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Contains the complete standalone <strong>Java 17 + Spring Boot 3</strong> application. Includes Maven <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">pom.xml</code>, JPA entities, repositories, services, controllers, DTOs, and <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">application.properties</code>.
+              </p>
+              <div className="text-[11px] font-mono text-slate-400 bg-slate-50 p-2.5 rounded border border-slate-100 space-y-1">
+                <div>• mvn clean install</div>
+                <div>• mvn spring-boot:run</div>
+                <div>• Port: 8080 (REST API)</div>
+              </div>
+              <button
+                onClick={() => { setActiveTab('code'); setFolderFilter('backend'); }}
+                className="w-full py-1.5 px-3 bg-teal-50 hover:bg-teal-100 text-teal-800 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1"
+              >
+                <span>Browse Java Files</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Folder 2: Database */}
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-3">
+              <div className="flex items-center gap-2 text-amber-700">
+                <Database className="w-5 h-5 text-amber-600" />
+                <h3 className="font-bold text-slate-900 font-mono text-sm">database/</h3>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Contains dedicated <strong>MySQL 8.0 DDL & DML scripts</strong>: <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">schema.sql</code> (tables, foreign keys, indexes) and <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">data.sql</code> (verified biological records).
+              </p>
+              <div className="text-[11px] font-mono text-slate-400 bg-slate-50 p-2.5 rounded border border-slate-100 space-y-1">
+                <div>• mysql &lt; schema.sql</div>
+                <div>• mysql &lt; data.sql</div>
+                <div>• Database: sleepgenemap</div>
+              </div>
+              <button
+                onClick={() => { 
+                  setActiveTab('code'); 
+                  setFolderFilter('database');
+                  const dbFile = codeFiles.find(f => f.path.startsWith('database'));
+                  if (dbFile) setSelectedFilePath(dbFile.path);
+                }}
+                className="w-full py-1.5 px-3 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-semibold rounded-lg transition-colors flex items-center justify-center gap-1"
+              >
+                <span>Browse SQL Scripts</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Folder 3: Frontend */}
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-2xs space-y-3">
+              <div className="flex items-center gap-2 text-indigo-700">
+                <Folder className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-bold text-slate-900 font-mono text-sm">src/ (UI Layer)</h3>
+              </div>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Dedicated client application directory. Houses modular UI components (Dashboard, Explorers, Sample Analysis, SVG Network Visualizer), API client services, and types.
+              </p>
+              <div className="text-[11px] font-mono text-slate-400 bg-slate-50 p-2.5 rounded border border-slate-100 space-y-1">
+                <div>• npm install</div>
+                <div>• npm run dev</div>
+                <div>• Port: 3000 / 4200</div>
+              </div>
+              <div className="w-full py-1.5 px-3 bg-indigo-50 text-indigo-800 text-xs font-semibold rounded-lg text-center">
+                Active Interactive UI
+              </div>
+            </div>
+          </div>
+
+          {/* Directory Hierarchy View */}
+          <div className="bg-slate-950 rounded-xl p-5 border border-slate-800 text-slate-200 font-mono text-xs shadow-xl space-y-3">
+            <div className="flex items-center justify-between text-slate-400 pb-2 border-b border-slate-800">
+              <span className="font-semibold text-teal-400">SleepGeneMap Monorepo Directory Architecture</span>
+              <span>Root Workspace</span>
+            </div>
+            <pre className="overflow-x-auto leading-relaxed text-slate-300">
+{`sleepgenemap/
+├── backend/                                   <--- Java Spring Boot Enterprise Backend
+│   ├── pom.xml                                <--- Maven build & dependency descriptors
+│   ├── README.md                              <--- Backend installation and run guide
+│   └── src/
+│       └── main/
+│           ├── java/com/sleepgenemap/
+│           │   ├── SleepGeneMapApplication.java<--- Application main entry point
+│           │   ├── controller/                <--- Spring REST API Controllers
+│           │   │   ├── DisorderController.java
+│           │   │   ├── GeneController.java
+│           │   │   ├── BiomarkerController.java
+│           │   │   ├── AnalysisController.java
+│           │   │   ├── SearchController.java
+│           │   │   └── StatisticsController.java
+│           │   ├── service/                   <--- Business Logic & Match Engine
+│           │   │   ├── DisorderService.java
+│           │   │   ├── GeneService.java
+│           │   │   ├── BiomarkerService.java
+│           │   │   └── AnalysisService.java
+│           │   ├── repository/                <--- Spring Data JPA Repositories
+│           │   │   ├── DisorderRepository.java
+│           │   │   ├── GeneRepository.java
+│           │   │   ├── BiomarkerRepository.java
+│           │   │   ├── GeneDisorderRepository.java
+│           │   │   ├── GeneBiomarkerRepository.java
+│           │   │   └── DisorderBiomarkerRepository.java
+│           │   ├── model/                     <--- JPA Relational Entities
+│           │   │   ├── Disorder.java
+│           │   │   ├── Gene.java
+│           │   │   ├── Biomarker.java
+│           │   │   ├── GeneDisorder.java
+│           │   │   ├── GeneBiomarker.java
+│           │   │   ├── DisorderBiomarker.java
+│           │   │   └── ScientificReference.java
+│           │   └── dto/                       <--- Request & Response DTOs
+│           │       ├── AnalysisRequest.java
+│           │       ├── AnalysisResponse.java
+│           │       ├── SearchResponse.java
+│           │       └── StatisticsResponse.java
+│           └── resources/
+│               ├── application.properties     <--- Datasource & Hibernate config
+│               ├── schema.sql                 <--- DDL table schemas
+│               └── data.sql                   <--- Biological starter records
+│
+├── database/                                  <--- Relational Database Directory
+│   ├── schema.sql                             <--- Clean MySQL 8.0 DDL table schemas
+│   └── data.sql                               <--- Verified biological dataset seed data
+│
+└── src/                                       <--- Frontend User Interface
+    ├── components/                            <--- Dashboard, Explorers, Analysis, Graph
+    ├── services/                              <--- REST API fetch client & match fallback
+    ├── types/                                 <--- Strict TypeScript bioinformatics interfaces
+    ├── App.tsx                                <--- Frontend Application root
+    ├── main.tsx                               <--- DOM hydration
+    └── index.css                              <--- Tailwind CSS styling`}
+            </pre>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: BACKEND CODE VIEWER */}
+      {activeTab === 'code' && (
+        loadingFiles ? (
+          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500 font-mono text-xs">
+            Reading physical backend and database files from disk via REST API...
+          </div>
+        ) : !currentFile ? (
+          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500 font-mono text-xs">
+            No source files found on disk.
+          </div>
+        ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+          {/* File Tree Sidebar */}
+          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs space-y-3 lg:sticky lg:top-20">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-semibold text-slate-400 uppercase tracking-wider block">
+                Physical Files on Disk
+              </span>
+              <span className="text-[10px] font-mono text-teal-700 bg-teal-50 px-1.5 py-0.5 rounded font-bold">
+                {filteredCodeFiles.length} files
+              </span>
+            </div>
+
+            {/* Folder filter buttons */}
+            <div className="flex items-center gap-1 p-0.5 bg-slate-100 rounded-lg text-xs">
+              <button
+                onClick={() => setFolderFilter('All')}
+                className={`flex-1 py-1 rounded text-center transition-colors ${
+                  folderFilter === 'All' ? 'bg-white font-bold text-slate-900 shadow-2xs' : 'text-slate-600'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFolderFilter('backend')}
+                className={`flex-1 py-1 rounded text-center transition-colors ${
+                  folderFilter === 'backend' ? 'bg-white font-bold text-teal-800 shadow-2xs' : 'text-slate-600'
+                }`}
+              >
+                backend/
+              </button>
+              <button
+                onClick={() => setFolderFilter('database')}
+                className={`flex-1 py-1 rounded text-center transition-colors ${
+                  folderFilter === 'database' ? 'bg-white font-bold text-amber-800 shadow-2xs' : 'text-slate-600'
+                }`}
+              >
+                database/
+              </button>
+            </div>
+
+            <div className="space-y-1 max-h-[550px] overflow-y-auto pr-1">
+              {filteredCodeFiles.map(file => (
+                <button
+                  key={file.path}
+                  onClick={() => setSelectedFilePath(file.path)}
+                  className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors flex items-center justify-between group ${
+                    selectedFilePath === file.path || currentFile.path === file.path
+                      ? 'bg-teal-50 text-teal-800 font-bold border border-teal-200'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  }`}
+                >
+                  <div className="truncate">
+                    <span className="font-mono text-[11px] block">{file.name}</span>
+                    <span className="text-[10px] text-slate-400 block group-hover:text-slate-500 font-sans truncate">
+                      {file.path}
+                    </span>
+                  </div>
+                  <ChevronRight className="w-3 h-3 text-slate-400 shrink-0" />
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* File Code Viewer and Explanation */}
+          <div className="lg:col-span-3 space-y-4">
+            {/* Student Explanation Card */}
+            <div className="bg-teal-50/80 border border-teal-200 rounded-xl p-4 text-xs space-y-1.5 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 font-bold font-mono text-teal-900 uppercase text-[11px]">
+                  <Info className="w-3.5 h-3.5 text-teal-700" />
+                  <span>File Details: {currentFile.name}</span>
+                </div>
+                <span className="text-[10px] font-mono px-2 py-0.5 bg-teal-100 text-teal-800 rounded font-semibold">
+                  {currentFile.category}
+                </span>
+              </div>
+              <p className="text-slate-700 leading-relaxed">
+                {currentFile.explanation}
+              </p>
+              <div className="text-[11px] text-slate-500 font-mono pt-1">
+                Physical file location: <strong className="text-slate-800">{currentFile.path}</strong>
+              </div>
+            </div>
+
+            {/* Code Box */}
+            <div className="bg-slate-950 rounded-xl border border-slate-800 shadow-xl overflow-hidden">
+              <div className="px-4 py-2.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400 font-mono">
+                <span>{currentFile.path}</span>
+                <button
+                  onClick={handleCopyFile}
+                  className="flex items-center gap-1.5 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-teal-400 rounded transition-colors text-xs font-sans"
+                >
+                  {copiedCode ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedCode ? 'Copied' : 'Copy Code'}</span>
+                </button>
+              </div>
+
+              <pre className="p-5 text-slate-200 font-mono text-xs overflow-x-auto max-h-[500px] leading-relaxed">
+                <code>{currentFile.content}</code>
+              </pre>
+            </div>
+          </div>
+        </div>
+        )
+      )}
+
+      {/* TAB: 14-CHAPTER DOCUMENTATION */}
       {activeTab === 'docs' && (
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
           {/* Chapter Table of Contents Sidebar */}
@@ -257,73 +559,9 @@ export const AcademicProjectViewer: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: SPRING BOOT SOURCE FILES EXPLORER */}
-      {activeTab === 'code' && (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-          {/* File Tree Sidebar */}
-          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-2xs space-y-3 lg:sticky lg:top-20">
-            <span className="text-xs font-mono font-semibold text-slate-400 uppercase tracking-wider block px-2">
-              Source File Tree
-            </span>
-            <div className="space-y-1 max-h-[550px] overflow-y-auto pr-1">
-              {SPRING_BOOT_CODE_FILES.map(file => (
-                <button
-                  key={file.path}
-                  onClick={() => setSelectedFilePath(file.path)}
-                  className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs transition-colors flex items-center justify-between group ${
-                    selectedFilePath === file.path
-                      ? 'bg-teal-50 text-teal-800 font-bold border border-teal-200'
-                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                  }`}
-                >
-                  <div className="truncate">
-                    <span className="font-mono text-[11px] block">{file.name}</span>
-                    <span className="text-[10px] text-slate-400 block group-hover:text-slate-500 font-sans">{file.category}</span>
-                  </div>
-                  <ChevronRight className="w-3 h-3 text-slate-400 shrink-0" />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* File Code Viewer and Explanation */}
-          <div className="lg:col-span-3 space-y-4">
-            {/* Student Explanation Card */}
-            <div className="bg-teal-50/80 border border-teal-200 rounded-xl p-4 text-xs space-y-1.5 shadow-2xs">
-              <div className="flex items-center gap-1.5 font-bold font-mono text-teal-900 uppercase text-[11px]">
-                <Info className="w-3.5 h-3.5 text-teal-700" />
-                <span>3rd-Year Student Code Explanation: {currentFile.name}</span>
-              </div>
-              <p className="text-slate-700 leading-relaxed">
-                {currentFile.explanation}
-              </p>
-            </div>
-
-            {/* Code Box */}
-            <div className="bg-slate-950 rounded-xl border border-slate-800 shadow-xl overflow-hidden">
-              <div className="px-4 py-2.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs text-slate-400 font-mono">
-                <span>{currentFile.path}</span>
-                <button
-                  onClick={handleCopyFile}
-                  className="flex items-center gap-1.5 px-3 py-1 bg-slate-800 hover:bg-slate-700 text-teal-400 rounded transition-colors text-xs"
-                >
-                  {copiedCode ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
-                  <span>{copiedCode ? 'Copied' : 'Copy Code'}</span>
-                </button>
-              </div>
-
-              <pre className="p-5 text-slate-200 font-mono text-xs overflow-x-auto max-h-[500px] leading-relaxed">
-                <code>{currentFile.content}</code>
-              </pre>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 3: ARCHITECTURE & DATABASE ER */}
+      {/* TAB: ARCHITECTURE & DATABASE ER */}
       {activeTab === 'architecture' && (
         <div className="space-y-6">
-          {/* Architecture Card */}
           <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-2xs space-y-4">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <Database className="w-5 h-5 text-teal-600" />
@@ -335,16 +573,15 @@ export const AcademicProjectViewer: React.FC = () => {
 
             <pre className="p-4 bg-slate-900 text-teal-300 font-mono text-xs rounded-xl overflow-x-auto leading-normal">
 {`+-------------------------------------------------------------+
-|                      CLIENT LAYER                           |
-|  Angular 17+ (TypeScript, HTML, CSS, Responsive UI)         |
-|  Components: Dashboard, Disorders, Genes, Biomarkers,       |
-|              Sample Analysis, Network Graph                 |
+|                      CLIENT LAYER (src/)                    |
+|  Angular / Web App: Reactive Components, Form Validation,   |
+|  Interactive Network Graph, Sample Analysis UI              |
 +-------------------------------------------------------------+
                                |
                         HTTP / JSON REST API
                                v
 +-------------------------------------------------------------+
-|                   SPRING BOOT BACKEND                       |
+|                SPRING BOOT BACKEND (backend/)               |
 |  Controller Layer: DisorderController, GeneController,      |
 |                    BiomarkerController, AnalysisController  |
 |                                                             |
@@ -357,7 +594,7 @@ export const AcademicProjectViewer: React.FC = () => {
                          Hibernate / JDBC
                                v
 +-------------------------------------------------------------+
-|                     DATABASE LAYER                          |
+|                 DATABASE LAYER (database/)                  |
 |  MySQL 8.0: database 'sleepgenemap'                         |
 |  Tables: disorders, genes, biomarkers, gene_disorder,       |
 |          gene_biomarker, disorder_biomarker, references     |
@@ -365,7 +602,6 @@ export const AcademicProjectViewer: React.FC = () => {
             </pre>
           </div>
 
-          {/* Database ER Schema */}
           <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-2xs space-y-4">
             <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <Database className="w-5 h-5 text-amber-600" />

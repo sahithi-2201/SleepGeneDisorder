@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { Disorder, Gene, Biomarker, ScientificReference } from '../types/bioinformatics';
 import { api, GlobalSearchResult } from '../services/api';
-import { SCIENTIFIC_REFERENCES } from '../data/bioData';
 
 interface GlobalSearchModalProps {
   isOpen: boolean;
@@ -19,6 +18,7 @@ interface GlobalSearchModalProps {
   onSelectDisorder: (disorder: Disorder) => void;
   onSelectGene: (gene: Gene) => void;
   onSelectBiomarker: (biomarker: Biomarker) => void;
+  references?: ScientificReference[];
   initialQuery?: string;
 }
 
@@ -28,6 +28,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
   onSelectDisorder,
   onSelectGene,
   onSelectBiomarker,
+  references = [],
   initialQuery = ''
 }) => {
   const [query, setQuery] = useState(initialQuery);
@@ -57,7 +58,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({
       setResults(res);
 
       const q = trimmed.toLowerCase();
-      const refs = SCIENTIFIC_REFERENCES.filter(r => 
+      const refs = references.filter(r => 
         r.title.toLowerCase().includes(q) ||
         r.authors.toLowerCase().includes(q) ||
         r.pmid.includes(q) ||

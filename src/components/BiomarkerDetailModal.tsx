@@ -1,26 +1,39 @@
 import React from 'react';
 import { X, Activity, Dna, Brain, ShieldAlert, BookOpen, ExternalLink } from 'lucide-react';
-import { Biomarker, Disorder, Gene } from '../types/bioinformatics';
-import { DISORDERS, GENES, DISORDER_BIOMARKER_RELATIONS, GENE_BIOMARKER_RELATIONS, SCIENTIFIC_REFERENCES } from '../data/bioData';
+import { Biomarker, Disorder, Gene, ScientificReference } from '../types/bioinformatics';
 
 interface BiomarkerDetailModalProps {
   biomarker: Biomarker | null;
   onClose: () => void;
   onSelectDisorder: (disorder: Disorder) => void;
   onSelectGene: (gene: Gene) => void;
+  disorders?: Disorder[];
+  genes?: Gene[];
+  references?: ScientificReference[];
+  relations?: {
+    geneDisorders?: any[];
+    disorderBiomarkers?: any[];
+    geneBiomarkers?: any[];
+  };
 }
 
 export const BiomarkerDetailModal: React.FC<BiomarkerDetailModalProps> = ({
   biomarker,
   onClose,
   onSelectDisorder,
-  onSelectGene
+  onSelectGene,
+  disorders = [],
+  genes = [],
+  references = [],
+  relations
 }) => {
   if (!biomarker) return null;
 
-  const associatedDisorders = DISORDERS.filter(d => biomarker.associatedDisorderIds.includes(d.id));
-  const associatedGenes = GENES.filter(g => biomarker.associatedGeneIds.includes(g.id));
-  const references = SCIENTIFIC_REFERENCES.filter(r => biomarker.referenceIds.includes(r.id));
+  const associatedDisorders = disorders.filter(d => biomarker.associatedDisorderIds.includes(d.id));
+  const associatedGenes = genes.filter(g => biomarker.associatedGeneIds.includes(g.id));
+  const biomarkerRefs = references.filter(r => biomarker.referenceIds.includes(r.id));
+  const disorderBiomarkers = relations?.disorderBiomarkers || [];
+  const geneBiomarkers = relations?.geneBiomarkers || [];
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
@@ -82,8 +95,8 @@ export const BiomarkerDetailModal: React.FC<BiomarkerDetailModalProps> = ({
             </h3>
             <div className="space-y-2">
               {associatedDisorders.map(disorder => {
-                const relation = DISORDER_BIOMARKER_RELATIONS.find(
-                  r => r.disorderId === disorder.id && r.biomarkerId === biomarker.id
+                const relation = disorderBiomarkers.find(
+                  r => (r.disorderId || r.disorder_id) === disorder.id && (r.biomarkerId || r.biomarker_id) === biomarker.id
                 );
                 return (
                   <div
@@ -123,8 +136,8 @@ export const BiomarkerDetailModal: React.FC<BiomarkerDetailModalProps> = ({
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {associatedGenes.map(gene => {
-                const relation = GENE_BIOMARKER_RELATIONS.find(
-                  r => r.geneId === gene.id && r.biomarkerId === biomarker.id
+                const relation = geneBiomarkers.find(
+                  r => (r.geneId || r.gene_id) === gene.id && (r.biomarkerId || r.biomarker_id) === biomarker.id
                 );
                 return (
                   <div
@@ -155,14 +168,14 @@ export const BiomarkerDetailModal: React.FC<BiomarkerDetailModalProps> = ({
           </div>
 
           {/* Literature References */}
-          {references.length > 0 && (
+          {biomarkerRefs.length > 0 && (
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
                 <BookOpen className="w-3.5 h-3.5 text-slate-500" />
                 Scientific References
               </h3>
               <div className="space-y-2">
-                {references.map(ref => (
+                {biomarkerRefs.map(ref => (
                   <div key={ref.id} className="p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1">
                     <div className="font-medium text-slate-900">{ref.title}</div>
                     <div className="text-slate-500">{ref.authors} ({ref.year})</div>

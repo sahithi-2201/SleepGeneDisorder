@@ -8,17 +8,6 @@ import {
   NetworkData,
   ScientificReference
 } from '../types/bioinformatics';
-import { 
-  DISORDERS, 
-  GENES, 
-  BIOMARKERS, 
-  SCIENTIFIC_REFERENCES, 
-  DATABASE_STATISTICS,
-  GENE_DISORDER_RELATIONS,
-  GENE_BIOMARKER_RELATIONS,
-  DISORDER_BIOMARKER_RELATIONS
-} from '../data/bioData';
-import { runSampleAnalysis } from './analysisEngine';
 
 export interface GlobalSearchResult {
   disorders: Disorder[];
@@ -28,195 +17,131 @@ export interface GlobalSearchResult {
 
 export const api = {
   async getStatistics(): Promise<DatabaseStatistics> {
-    try {
-      const res = await fetch('/api/statistics');
-      if (res.ok) return await res.json();
-    } catch {
-      // Fallback
-    }
-    return DATABASE_STATISTICS;
+    const res = await fetch('/api/statistics');
+    if (!res.ok) throw new Error(`HTTP error ${res.status}: Failed to fetch database statistics`);
+    return await res.json();
   },
 
-  async getDisorders(): Promise<Disorder[]> {
-    try {
-      const res = await fetch('/api/disorders');
-      if (res.ok) return await res.json();
-    } catch {
-      // Fallback
-    }
-    return DISORDERS;
+  async getDisorders(category?: string): Promise<Disorder[]> {
+    const url = category && category !== 'All' 
+      ? `/api/disorders?category=${encodeURIComponent(category)}`
+      : '/api/disorders';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error ${res.status}: Failed to fetch disorders from database`);
+    return await res.json();
   },
 
   async getDisorderById(id: number): Promise<Disorder | undefined> {
-    try {
-      const res = await fetch(`/api/disorders/${id}`);
-      if (res.ok) return await res.json();
-    } catch {
-      // Fallback
-    }
-    return DISORDERS.find(d => d.id === id);
+    const res = await fetch(`/api/disorders/${id}`);
+    if (res.status === 404) return undefined;
+    if (!res.ok) throw new Error(`HTTP error ${res.status}: Failed to fetch disorder ${id}`);
+    return await res.json();
   },
 
   async getGenes(): Promise<Gene[]> {
-    try {
-      const res = await fetch('/api/genes');
-      if (res.ok) return await res.json();
-    } catch {
-      // Fallback
-    }
-    return GENES;
+    const res = await fetch('/api/genes');
+    if (!res.ok) throw new Error(`HTTP error ${res.status}: Failed to fetch genes from database`);
+    return await res.json();
   },
 
   async getGeneById(id: number): Promise<Gene | undefined> {
-    try {
-      const res = await fetch(`/api/genes/${id}`);
-      if (res.ok) return await res.json();
-    } catch {
-      // Fallback
-    }
-    return GENES.find(g => g.id === id);
+    const res = await fetch(`/api/genes/${id}`);
+    if (res.status === 404) return undefined;
+    if (!res.ok) throw new Error(`HTTP error ${res.status}: Failed to fetch gene ${id}`);
+    return await res.json();
   },
 
-  async getBiomarkers(): Promise<Biomarker[]> {
-    try {
-      const res = await fetch('/api/biomarkers');
-      if (res.ok) return await res.json();
-    } catch {
-      // Fallback
-    }
-    return BIOMARKERS;
+  async searchGenes(query: string): Promise<Gene[]> {
+    const res = await fetch(`/api/genes/search?query=${encodeURIComponent(query)}`);
+    if (!res.ok) return [];
+    return await res.json();
+  },
+
+  async getBiomarkers(type?: string): Promise<Biomarker[]> {
+    const url = type && type !== 'All' 
+      ? `/api/biomarkers?type=${encodeURIComponent(type)}`
+      : '/api/biomarkers';
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error ${res.status}: Failed to fetch biomarkers from database`);
+    return await res.json();
   },
 
   async getBiomarkerById(id: number): Promise<Biomarker | undefined> {
-    try {
-      const res = await fetch(`/api/biomarkers/${id}`);
-      if (res.ok) return await res.json();
-    } catch {
-      // Fallback
-    }
-    return BIOMARKERS.find(b => b.id === id);
+    const res = await fetch(`/api/biomarkers/${id}`);
+    if (res.status === 404) return undefined;
+    if (!res.ok) throw new Error(`HTTP error ${res.status}: Failed to fetch biomarker ${id}`);
+    return await res.json();
+  },
+
+  async searchBiomarkers(query: string): Promise<Biomarker[]> {
+    const res = await fetch(`/api/biomarkers/search?query=${encodeURIComponent(query)}`);
+    if (!res.ok) return [];
+    return await res.json();
   },
 
   async search(query: string): Promise<GlobalSearchResult> {
-    try {
-      const res = await fetch(`/api/search?query=${encodeURIComponent(query)}`);
-      if (res.ok) return await res.json();
-    } catch {
-      // Fallback
-    }
-    const q = query.toLowerCase().trim();
-    if (!q) {
+    const trimmed = query.trim();
+    if (!trimmed) {
       return { disorders: [], genes: [], biomarkers: [] };
     }
+    const res = await fetch(`/api/search?query=${encodeURIComponent(trimmed)}`);
+    if (!res.ok) throw new Error(`Search failed: HTTP ${res.status}`);
+    const data = await res.json();
     return {
-      disorders: DISORDERS.filter(d => 
-        d.name.toLowerCase().includes(q) || 
-        d.description.toLowerCase().includes(q) || 
-        d.category.toLowerCase().includes(q) || 
-        d.synonyms.toLowerCase().includes(q)
-      ),
-      genes: GENES.filter(g => 
-        g.symbol.toLowerCase().includes(q) || 
-        g.name.toLowerCase().includes(q) || 
-        g.ncbiId.toString().includes(q) || 
-        g.uniprotId.toLowerCase().includes(q) ||
-        g.chromosome.toLowerCase().includes(q)
-      ),
-      biomarkers: BIOMARKERS.filter(b => 
-        b.name.toLowerCase().includes(q) || 
-        b.type.toLowerCase().includes(q) || 
-        b.sampleType.toLowerCase().includes(q) || 
-        b.description.toLowerCase().includes(q)
-      )
+      disorders: data.disorders || [],
+      genes: data.genes || [],
+      biomarkers: data.biomarkers || []
     };
   },
 
   async analyzeSample(payload: SampleAnalysisRequest): Promise<SampleAnalysisResponse> {
-    try {
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      if (res.ok) return await res.json();
-    } catch {
-      // Fallback
+    const res = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `Analysis request failed with HTTP ${res.status}`);
     }
-    return runSampleAnalysis(payload);
+    return await res.json();
   },
 
   async getNetworkData(): Promise<NetworkData> {
+    const res = await fetch('/api/graph');
+    if (!res.ok) throw new Error(`Failed to load network graph from database: HTTP ${res.status}`);
+    return await res.json();
+  },
+
+  async getReferences(ids?: number[]): Promise<ScientificReference[]> {
+    const url = ids && ids.length > 0
+      ? `/api/references?ids=${ids.join(',')}`
+      : '/api/references';
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    return await res.json();
+  },
+
+  async getRelations(): Promise<{
+    geneDisorders: any[];
+    geneBiomarkers: any[];
+    disorderBiomarkers: any[];
+  }> {
+    const res = await fetch('/api/relations');
+    if (!res.ok) return { geneDisorders: [], geneBiomarkers: [], disorderBiomarkers: [] };
+    return await res.json();
+  },
+
+  async getProjectFiles() {
     try {
-      const res = await fetch('/api/graph');
-      if (res.ok) return await res.json();
+      const res = await fetch('/api/project-files');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) return data;
+      }
     } catch {
       // Fallback
     }
-
-    const nodes: NetworkData['nodes'] = [
-      ...DISORDERS.map(d => ({
-        id: `disorder-${d.id}`,
-        label: d.name,
-        type: 'disorder' as const,
-        originalId: d.id,
-        category: d.category
-      })),
-      ...GENES.map(g => ({
-        id: `gene-${g.id}`,
-        label: g.symbol,
-        type: 'gene' as const,
-        originalId: g.id,
-        category: g.chromosome
-      })),
-      ...BIOMARKERS.map(b => ({
-        id: `biomarker-${b.id}`,
-        label: b.name,
-        type: 'biomarker' as const,
-        originalId: b.id,
-        category: b.type
-      }))
-    ];
-
-    const links: NetworkData['links'] = [
-      ...GENE_DISORDER_RELATIONS.map(r => {
-        const gene = GENES.find(g => g.id === r.geneId);
-        const disorder = DISORDERS.find(d => d.id === r.disorderId);
-        return {
-          source: `gene-${r.geneId}`,
-          target: `disorder-${r.disorderId}`,
-          relationType: 'gene-disorder' as const,
-          label: `${gene?.symbol || ''} → ${disorder?.name || ''}`,
-          pmid: r.pmid
-        };
-      }),
-      ...GENE_BIOMARKER_RELATIONS.map(r => {
-        const gene = GENES.find(g => g.id === r.geneId);
-        const biomarker = BIOMARKERS.find(b => b.id === r.biomarkerId);
-        return {
-          source: `gene-${r.geneId}`,
-          target: `biomarker-${r.biomarkerId}`,
-          relationType: 'gene-biomarker' as const,
-          label: r.relationship,
-          pmid: r.pmid
-        };
-      }),
-      ...DISORDER_BIOMARKER_RELATIONS.map(r => {
-        const disorder = DISORDERS.find(d => d.id === r.disorderId);
-        const biomarker = BIOMARKERS.find(b => b.id === r.biomarkerId);
-        return {
-          source: `disorder-${r.disorderId}`,
-          target: `biomarker-${r.biomarkerId}`,
-          relationType: 'disorder-biomarker' as const,
-          label: `${disorder?.name || ''} ↔ ${biomarker?.name || ''}`,
-          pmid: r.pmid
-        };
-      })
-    ];
-
-    return { nodes, links };
-  },
-
-  getReferencesForIds(ids: number[]): ScientificReference[] {
-    return SCIENTIFIC_REFERENCES.filter(r => ids.includes(r.id));
+    return null;
   }
 };

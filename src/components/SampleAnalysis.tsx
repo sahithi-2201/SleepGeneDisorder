@@ -19,18 +19,21 @@ import {
 } from 'lucide-react';
 import { SampleAnalysisRequest, SampleAnalysisResponse, Disorder, Gene, Biomarker } from '../types/bioinformatics';
 import { api } from '../services/api';
-import { GENES, BIOMARKERS } from '../data/bioData';
 
 interface SampleAnalysisProps {
   onSelectDisorder: (disorder: Disorder) => void;
   onSelectGene: (gene: Gene) => void;
   onSelectBiomarker: (biomarker: Biomarker) => void;
+  genes?: Gene[];
+  biomarkers?: Biomarker[];
 }
 
 export const SampleAnalysis: React.FC<SampleAnalysisProps> = ({
   onSelectDisorder,
   onSelectGene,
-  onSelectBiomarker
+  onSelectBiomarker,
+  genes = [],
+  biomarkers = []
 }) => {
   const [sampleId, setSampleId] = useState('SAMPLE001');
   const [gene, setGene] = useState('PER2');
@@ -251,7 +254,7 @@ export const SampleAnalysis: React.FC<SampleAnalysisProps> = ({
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
               <datalist id="genes-datalist">
-                {GENES.map(g => (
+                {genes.map(g => (
                   <option key={g.id} value={g.symbol}>{g.name}</option>
                 ))}
               </datalist>
@@ -274,7 +277,7 @@ export const SampleAnalysis: React.FC<SampleAnalysisProps> = ({
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
               <datalist id="biomarkers-datalist">
-                {BIOMARKERS.map(b => (
+                {biomarkers.map(b => (
                   <option key={b.id} value={b.name}>{b.type}</option>
                 ))}
               </datalist>

@@ -1,26 +1,39 @@
 import React from 'react';
 import { X, Dna, Activity, BookOpen, ExternalLink, ShieldAlert } from 'lucide-react';
 import { Disorder, Gene, Biomarker, ScientificReference } from '../types/bioinformatics';
-import { GENES, BIOMARKERS, SCIENTIFIC_REFERENCES, GENE_DISORDER_RELATIONS, DISORDER_BIOMARKER_RELATIONS } from '../data/bioData';
 
 interface DisorderDetailModalProps {
   disorder: Disorder | null;
   onClose: () => void;
   onSelectGene: (gene: Gene) => void;
   onSelectBiomarker: (biomarker: Biomarker) => void;
+  genes?: Gene[];
+  biomarkers?: Biomarker[];
+  references?: ScientificReference[];
+  relations?: {
+    geneDisorders?: any[];
+    disorderBiomarkers?: any[];
+    geneBiomarkers?: any[];
+  };
 }
 
 export const DisorderDetailModal: React.FC<DisorderDetailModalProps> = ({
   disorder,
   onClose,
   onSelectGene,
-  onSelectBiomarker
+  onSelectBiomarker,
+  genes = [],
+  biomarkers = [],
+  references = [],
+  relations
 }) => {
   if (!disorder) return null;
 
-  const associatedGenes = GENES.filter(g => disorder.associatedGeneIds.includes(g.id));
-  const associatedBiomarkers = BIOMARKERS.filter(b => disorder.associatedBiomarkerIds.includes(b.id));
-  const references = SCIENTIFIC_REFERENCES.filter(r => disorder.referenceIds.includes(r.id));
+  const associatedGenes = genes.filter(g => disorder.associatedGeneIds.includes(g.id));
+  const associatedBiomarkers = biomarkers.filter(b => disorder.associatedBiomarkerIds.includes(b.id));
+  const disorderRefs = references.filter(r => disorder.referenceIds.includes(r.id));
+  const geneDisorders = relations?.geneDisorders || [];
+  const disorderBiomarkers = relations?.disorderBiomarkers || [];
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6">
@@ -75,8 +88,8 @@ export const DisorderDetailModal: React.FC<DisorderDetailModalProps> = ({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {associatedGenes.map(gene => {
-                const relation = GENE_DISORDER_RELATIONS.find(
-                  r => r.geneId === gene.id && r.disorderId === disorder.id
+                const relation = geneDisorders.find(
+                  r => (r.geneId || r.gene_id) === gene.id && (r.disorderId || r.disorder_id) === disorder.id
                 );
                 return (
                   <div 
@@ -116,8 +129,8 @@ export const DisorderDetailModal: React.FC<DisorderDetailModalProps> = ({
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {associatedBiomarkers.map(biomarker => {
-                const relation = DISORDER_BIOMARKER_RELATIONS.find(
-                  r => r.biomarkerId === biomarker.id && r.disorderId === disorder.id
+                const relation = disorderBiomarkers.find(
+                  r => (r.biomarkerId || r.biomarker_id) === biomarker.id && (r.disorderId || r.disorder_id) === disorder.id
                 );
                 return (
                   <div 
@@ -154,7 +167,7 @@ export const DisorderDetailModal: React.FC<DisorderDetailModalProps> = ({
               Scientific Evidence & Literature
             </h3>
             <div className="space-y-2">
-              {references.map(ref => (
+              {disorderRefs.map(ref => (
                 <div key={ref.id} className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs space-y-1">
                   <div className="font-medium text-slate-900">{ref.title}</div>
                   <div className="text-slate-500">{ref.authors} ({ref.year}) - <span className="italic">{ref.journal}</span></div>
